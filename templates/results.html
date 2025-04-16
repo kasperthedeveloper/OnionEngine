@@ -103,7 +103,6 @@
 
     const loadedLinks = new Set();
 
-    // Initialize with any already-rendered results
     document.querySelectorAll("ul#results-list li").forEach(li => {
       const link = li.getAttribute("data-link");
       if (link) loadedLinks.add(link);
@@ -113,20 +112,20 @@
       if (loadingIndicator.style.display === "block") return;
 
       loadingIndicator.style.display = "block";
+
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=${page}`);
       const data = await res.json();
 
-      if (data.results.length === 0) {
+      if (!data || !data.results || data.results.length === 0) {
         loadingIndicator.innerText = "No more results.";
-        return;
+        return false;
       }
 
       let addedAny = false;
 
       data.results.forEach(r => {
         let link = r.link.startsWith('http') ? r.link : 'http://' + r.link;
-
-        if (loadedLinks.has(link)) return; // skip duplicates
+        if (loadedLinks.has(link)) return;
 
         loadedLinks.add(link);
         addedAny = true;
@@ -143,21 +142,31 @@
 
       if (!addedAny) {
         loadingIndicator.innerText = "No more new results.";
+        return false;
       } else {
         loadingIndicator.style.display = "none";
         page += 1;
+        return true;
       }
     }
 
+    // Infinite scroll
     window.addEventListener("scroll", () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
         loadMoreResults();
       }
     });
 
-    if (!document.querySelector("ul#results-list li")) {
-      loadMoreResults();
+    // Load more aggressively on page load
+    async function preloadMore(count = 10) {
+      for (let i = 0; i < count; i++) {
+        const more = await loadMoreResults();
+        if (!more) break;
+        await new Promise(r => setTimeout(r, 200)); // slight delay between fetches
+      }
     }
+
+    preloadMore(15); // Load 15 pages worth of results up front
   </script>
 </body>
 </html>
