@@ -15,12 +15,13 @@ def search():
     if not query:
         return redirect(url_for("index"))
     
-    # Fetch first batch of results (page 0) using full URL
+    # Fetch first batch of results (page 0) from the correct URL
     results = []
     page = 0
     try:
-        # Use the full URL here with scheme (http://localhost:5000)
-        res = requests.get(f"http://localhost:5000/api/search?q={query}&page={page}")
+        # Fetch results from Ahmia directly using the external URL
+        res = requests.get(f"{AHMIA_SEARCH_URL}?q={query}&start={page * 20}")
+        res.raise_for_status()
         data = res.json()
         results = data.get("results", [])
     except requests.RequestException as e:
