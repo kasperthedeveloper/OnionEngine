@@ -66,7 +66,7 @@ def api_search():
     for item in result_elements:
         title_tag = item.find("a")
         snippet_tag = item.find("p")
-        if title_tag and title_tag["href"].endswith(".onion/"):
+        if title_tag and ".onion" in title_tag["href"]:
             result = {
                 "title": title_tag.text.strip(),
                 "link": title_tag["href"],
