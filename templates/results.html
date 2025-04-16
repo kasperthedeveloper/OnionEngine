@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Results for {{ query }}</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: "Inter", system-ui, sans-serif;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    h1 {
+      margin-bottom: 1.5rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #1e1e1e;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 255, 100, 0.1);
+    }
+
+    a {
+      color: #00ff88;
+      text-decoration: none;
+      font-size: 1.2rem;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    small {
+      color: #999;
+    }
+
+    p {
+      margin-top: 0.5rem;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #00ff88;
+      text-decoration: none;
+    }
+
+    .back:hover {
+      text-decoration: underline;
+    }
+
+    .error {
+      color: #ff5252;
+      font-weight: bold;
+    }
+
+    #loading {
+      text-align: center;
+      margin-top: 2rem;
+      color: #00ff88;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Results for "<em>{{ query }}</em>"</h1>
+
+  {% if error %}
+    <p class="error">Error: {{ error }}</p>
+  {% elif results %}
+    <ul id="results-list">
+      {% for r in results %}
+        <li>
+          <a href="{{ r.link }}" target="_blank">{{ r.title }}</a><br>
+          <small>{{ r.link }}</small>
+          <p>{{ r.snippet }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No results found.</p>
+  {% endif %}
+
+  <p id="loading" style="display: none;">Loading more results...</p>
+
+  <a href="/" class="back">← Back to search</a>
+
+  <script>
+    let page = 1;
+    const query = "{{ query }}";
+    const loadingIndicator = document.getElementById("loading");
+    const resultsList = document.getElementById("results-list");
+
+    // Function to fetch and append more results when the user scrolls
+    async function loadMoreResults() {
+      // Check if already loading
+      if (loadingIndicator.style.display === "block") return;
+
+      loadingIndicator.style.display = "block";
+
+      // Fetch the next page of results from the API
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=${page}`);
+      const data = await res.json();
+
+      if (data.results.length === 0) {
+        loadingIndicator.innerText = "No more results.";
+        return;
+      }
+
+      // Append the results to the list
+      data.results.forEach(r => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <a href="${r.link}" target="_blank">${r.title}</a><br>
+          <small>${r.link}</small>
+          <p>${r.snippet}</p>
+        `;
+        resultsList.appendChild(li);
+      });
+
+      // Hide loading indicator and increment page number
+      loadingIndicator.style.display = "none";
+      page += 1;
+    }
+
+    // Infinite scroll: load more when user is near the bottom
+    window.addEventListener("scroll", () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+        loadMoreResults();
+      }
+    });
+
+    // Optionally, load the first batch of results immediately
+    if (!document.querySelector("ul#results-list li")) {
+      loadMoreResults();
+    }
+  </script>
+</body>
+</html>
