@@ -121,7 +121,7 @@
       data.results.forEach(r => {
         let link = r.link.startsWith('http') ? r.link : 'http://' + r.link;
         let isOnion = link.includes('.onion');
-        let href = isOnion ? `tor:${link}` : link;
+        let href = isOnion ? `${link}` : link;
 
         const li = document.createElement("li");
         li.innerHTML = `
