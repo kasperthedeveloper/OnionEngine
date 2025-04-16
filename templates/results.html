@@ -80,8 +80,14 @@
     <ul id="results-list">
       {% for r in results %}
         <li>
-          <a href="{{ r.link }}" target="_blank">{{ r.title }}</a><br>
-          <small>{{ r.link }}</small>
+          {% set onion_url = r.link if r.link.startswith('http') else 'http://' + r.link %}
+          {% if '.onion' in onion_url %}
+            <a href="tor:{{ onion_url }}" target="_blank">{{ r.title }}</a><br>
+            <small>{{ onion_url }}</small>
+          {% else %}
+            <a href="{{ onion_url }}" target="_blank">{{ r.title }}</a><br>
+            <small>{{ onion_url }}</small>
+          {% endif %}
           <p>{{ r.snippet }}</p>
         </li>
       {% endfor %}
@@ -100,14 +106,10 @@
     const loadingIndicator = document.getElementById("loading");
     const resultsList = document.getElementById("results-list");
 
-    // Function to fetch and append more results when the user scrolls
     async function loadMoreResults() {
-      // Check if already loading
       if (loadingIndicator.style.display === "block") return;
 
       loadingIndicator.style.display = "block";
-
-      // Fetch the next page of results from the API
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=${page}`);
       const data = await res.json();
 
@@ -116,30 +118,30 @@
         return;
       }
 
-      // Append the results to the list
       data.results.forEach(r => {
+        let link = r.link.startsWith('http') ? r.link : 'http://' + r.link;
+        let isOnion = link.includes('.onion');
+        let href = isOnion ? `tor:${link}` : link;
+
         const li = document.createElement("li");
         li.innerHTML = `
-          <a href="${r.link}" target="_blank">${r.title}</a><br>
-          <small>${r.link}</small>
+          <a href="${href}" target="_blank">${r.title}</a><br>
+          <small>${link}</small>
           <p>${r.snippet}</p>
         `;
         resultsList.appendChild(li);
       });
 
-      // Hide loading indicator and increment page number
       loadingIndicator.style.display = "none";
       page += 1;
     }
 
-    // Infinite scroll: load more when user is near the bottom
     window.addEventListener("scroll", () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
         loadMoreResults();
       }
     });
 
-    // Optionally, load the first batch of results immediately
     if (!document.querySelector("ul#results-list li")) {
       loadMoreResults();
     }
