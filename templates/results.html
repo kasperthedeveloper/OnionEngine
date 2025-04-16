@@ -109,7 +109,20 @@
 
       // Fetch the next page of results from the API
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=${page}`);
-      const data = await res.json();
+      
+      // Log the response to check if it's valid
+      const text = await res.text(); // Read as text instead of json to debug
+      console.log(text); // Log the raw response to the console
+
+      // Try parsing the response as JSON
+      let data;
+      try {
+        data = JSON.parse(text); // Manually parse the response
+      } catch (e) {
+        console.error("Error parsing response:", e);
+        loadingIndicator.innerText = "Error loading more results.";
+        return;
+      }
 
       if (data.results.length === 0) {
         loadingIndicator.innerText = "No more results.";
