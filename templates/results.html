@@ -81,7 +81,7 @@
       {% for r in results %}
         <li>
           {% set onion_url = r.link if r.link.startswith('http') else 'http://' + r.link %}
-          <a href="{{ onion_url }}" target="_blank">{{ r.title }}</a><br>
+          <a href="{{ onion_url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a><br>
           <small>{{ onion_url }}</small>
           <p>{{ r.snippet }}</p>
         </li>
@@ -118,7 +118,7 @@
 
         const li = document.createElement("li");
         li.innerHTML = `
-          <a href="${link}" target="_blank">${r.title}</a><br>
+          <a href="${link}" target="_blank" rel="noopener noreferrer">${r.title}</a><br>
           <small>${link}</small>
           <p>${r.snippet}</p>
         `;
