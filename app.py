@@ -15,13 +15,15 @@ def search():
     if not query:
         return redirect(url_for("index"))
     
-    # Fetch first batch of results (page 0) from the correct URL
+    # Fetch first batch of results (page 0)
     results = []
     page = 0
     try:
-        # Fetch results from Ahmia directly using the external URL
-        res = requests.get(f"{AHMIA_SEARCH_URL}?q={query}&start={page * 20}")
-        res.raise_for_status()
+        # Dynamically get the full URL of the deployed app
+        base_url = request.host_url  # This will give us the correct base URL for the deployed app
+        
+        # Use the correct base URL for the API request
+        res = requests.get(f"{base_url}api/search?q={query}&page={page}")
         data = res.json()
         results = data.get("results", [])
     except requests.RequestException as e:
@@ -72,4 +74,4 @@ def api_search():
     return jsonify({"results": results, "error": None})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
