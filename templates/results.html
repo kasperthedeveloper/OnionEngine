@@ -79,8 +79,8 @@
   {% elif results %}
     <ul id="results-list">
       {% for r in results %}
-        <li>
-          {% set onion_url = r.link if r.link.startswith('http') else 'http://' + r.link %}
+        {% set onion_url = r.link if r.link.startswith('http') else 'http://' + r.link %}
+        <li data-link="{{ onion_url }}">
           <a href="{{ onion_url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a><br>
           <small>{{ onion_url }}</small>
           <p>{{ r.snippet }}</p>
@@ -101,6 +101,14 @@
     const loadingIndicator = document.getElementById("loading");
     const resultsList = document.getElementById("results-list");
 
+    const loadedLinks = new Set();
+
+    // Initialize with any already-rendered results
+    document.querySelectorAll("ul#results-list li").forEach(li => {
+      const link = li.getAttribute("data-link");
+      if (link) loadedLinks.add(link);
+    });
+
     async function loadMoreResults() {
       if (loadingIndicator.style.display === "block") return;
 
@@ -113,10 +121,18 @@
         return;
       }
 
+      let addedAny = false;
+
       data.results.forEach(r => {
         let link = r.link.startsWith('http') ? r.link : 'http://' + r.link;
 
+        if (loadedLinks.has(link)) return; // skip duplicates
+
+        loadedLinks.add(link);
+        addedAny = true;
+
         const li = document.createElement("li");
+        li.setAttribute("data-link", link);
         li.innerHTML = `
           <a href="${link}" target="_blank" rel="noopener noreferrer">${r.title}</a><br>
           <small>${link}</small>
@@ -125,8 +141,12 @@
         resultsList.appendChild(li);
       });
 
-      loadingIndicator.style.display = "none";
-      page += 1;
+      if (!addedAny) {
+        loadingIndicator.innerText = "No more new results.";
+      } else {
+        loadingIndicator.style.display = "none";
+        page += 1;
+      }
     }
 
     window.addEventListener("scroll", () => {
