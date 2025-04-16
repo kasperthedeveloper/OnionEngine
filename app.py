@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import requests
 from bs4 import BeautifulSoup
-
+from urllib.parse import urlparse, parse_qs, unquote
 app = Flask(__name__)
 AHMIA_SEARCH_URL = "https://ahmia.fi/search/"
 
@@ -66,13 +66,20 @@ def api_search():
     for item in result_elements:
         title_tag = item.find("a")
         snippet_tag = item.find("p")
-        if title_tag and ".onion" in title_tag["href"]:
-            result = {
-                "title": title_tag.text.strip(),
-                "link": title_tag["href"],
-                "snippet": snippet_tag.text.strip() if snippet_tag else ""
-            }
-            results.append(result)
+
+        if title_tag:
+            raw_href = title_tag["href"]
+            parsed_url = urlparse(raw_href)
+            query_params = parse_qs(parsed_url.query)
+            real_url = query_params.get("redirect_url", [None])[0]
+    
+            if real_url and real_url.endswith(".onion/") or ".onion/" in real_url:
+                result = {
+                    "title": title_tag.text.strip(),
+                    "link": unquote(real_url),
+                    "snippet": snippet_tag.text.strip() if snippet_tag else ""
+                }
+                results.append(result)
     
     return jsonify({"results": results, "error": None})
 
