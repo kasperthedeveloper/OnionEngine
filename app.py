@@ -42,8 +42,11 @@ def api_search():
     if page >= max_pages:
         return jsonify({"results": [], "error": "No more results."})
     
+    # Get the User-Agent from the incoming request (client's request)
+    user_agent = request.headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)')
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        "User-Agent": user_agent  # Use the User-Agent from the client
     }
     
     try:
